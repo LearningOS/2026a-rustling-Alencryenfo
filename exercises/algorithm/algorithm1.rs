@@ -2,8 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
-
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
 use std::vec::*;
@@ -69,14 +67,48 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+	pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
+	where
+		T: Ord,
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
-        }
+		let mut merged = LinkedList::new();
+		let mut a = list_a.start;
+		let mut b = list_b.start;
+
+		while a.is_some() || b.is_some() {
+			let next = match (a, b) {
+				(Some(pa), Some(pb)) => {
+					if unsafe { &(*pa.as_ptr()).val <= &(*pb.as_ptr()).val } {
+						a = unsafe { (*pa.as_ptr()).next };
+						Some(pa)
+					} else {
+						b = unsafe { (*pb.as_ptr()).next };
+						Some(pb)
+					}
+				}
+				(Some(pa), None) => {
+					a = unsafe { (*pa.as_ptr()).next };
+					Some(pa)
+				}
+				(None, Some(pb)) => {
+					b = unsafe { (*pb.as_ptr()).next };
+					Some(pb)
+				}
+				(None, None) => None,
+			};
+
+			if let Some(node) = next {
+				unsafe { (*node.as_ptr()).next = None };
+				match merged.end {
+					None => merged.start = Some(node),
+					Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = Some(node) },
+				}
+				merged.end = Some(node);
+				merged.length += 1;
+			}
+		}
+
+		merged
 	}
 }
 
@@ -135,7 +167,7 @@ mod tests {
 		let vec_a = vec![1,3,5,7];
 		let vec_b = vec![2,4,6,8];
 		let target_vec = vec![1,2,3,4,5,6,7,8];
-		
+
 		for i in 0..vec_a.len(){
 			list_a.add(vec_a[i]);
 		}
